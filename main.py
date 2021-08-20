@@ -1,16 +1,33 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+import sys
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QFile, QIODevice
+from PyQt5.QtWidgets import *
+from PyQt5 import uic
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+class UI(QMainWindow):
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    def __init__(self):
+        super(UI, self).__init__()
+        uic.loadUi('Qt_designer/test_0.ui', self)
+        self.serach_button = self.findChild(QToolButton, 'search_button')
+        self.filter_window = self.findChild(QFrame, 'filter_window')
+        self.b2 = self.findChild(QToolButton, 'button_close')
+        self.table = self.findChild(QTableWidget, 'tableWidget')
+        self.grid_filter_window = self.findChild(QGridLayout, 'grid_filter_window')
+        self.filter_window.hide()
+        self.serach_button.clicked.connect(self.button_action)
+        self.b2.clicked.connect(self.button_close_action)
+        self.show()
+
+    def button_action(self):
+        self.filter_window.show()
+
+    def button_close_action(self):
+        self.filter_window.hide()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    UIWindow = UI()
+    sys.exit(app.exec_())

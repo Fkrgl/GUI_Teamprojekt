@@ -1,2 +1,5 @@
 # Project exclude paths
 /venv/
+GUI.py
+GUI_functions.py
+OOP.py

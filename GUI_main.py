@@ -18,10 +18,16 @@ class UI(QMainWindow):
         self.filter_window.hide()
 
         # table
+        self.vcf_table.setAlternatingRowColors(True)
+        self.vcf_table.setStyleSheet("alternate-background-color: PowderBlue")
+
 
         self.actionLoad_File.triggered.connect(self.load_file_from_filebrowser)
         self.search_button.clicked.connect(self.button_action)
         self.button_close.clicked.connect(self.button_close_action)
+        #self.vcf_table.clicked.connect(self.select_row)
+        self.button_annotation.clicked.connect(self.display_selected_snv_annotations)
+
 
 
         self.show()
@@ -51,30 +57,26 @@ class UI(QMainWindow):
             print("The selected file is not in variant call format!")
             # open Error dialog window
 
-    # def fill_table(self, file_path):
-    #     with open(file_path, 'r') as file:
-    #         for line in file:
-    #             if not line.startswith('##'):
-    #                 if line.startswith('#'):
-    #                     table_header = line[1:-1].split('\t')
-    #                     self.vcf_table.setColumnCount(len(table_header))
-    #                     self.vcf_table.setHorizontalHeaderLabels(table_header)
-    #                 else:
-    #                     table_items = line.strip().split('\t')
-    #                     rowPosition = self.vcf_table.rowCount()
-    #                     self.vcf_table.insertRow(rowPosition)
-    #                     for n_col in range(len(table_header)):
-    #                         self.vcf_table.setItem(rowPosition, n_col, QTableWidgetItem(table_items[n_col]))
-
     def create_annotation_tab(self):
+        """
+        creates a second tab with the annotation table
+        """
         self.annotation_tab = QWidget()
         self.tab_window_tables.addTab(self.annotation_tab, "Annotations")
         self.tab_window_tables.setTabText(0, 'VCF')
+        # load annotations in table
 
-    def select_row(self):
+    def display_selected_snv_annotations(self):
+        """
+        save selected row indices of the (annotation) table, search for each selected snv (row) all annotations and dis-
+        playes annotations in a new table in a pop up window
+        """
         indexes = self.vcf_table.selectionModel().selectedRows()
         for index in sorted(indexes):
             print('Row %d is selected' % index.row())
+        # rest has to be implemented
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

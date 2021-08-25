@@ -21,6 +21,8 @@ class UI(QMainWindow):
         self.actionLoad_File.triggered.connect(self.load_file_from_filebrowser)
         self.search_button.clicked.connect(self.button_action)
         self.button_close.clicked.connect(self.button_close_action)
+        self.func_mappingSignal()
+
 
         self.show()
 
@@ -54,8 +56,19 @@ class UI(QMainWindow):
                         for n_col in range(len(table_header)):
                             self.vcf_table.setItem(rowPosition, n_col, QTableWidgetItem(table_items[n_col]))
 
+    def func_mappingSignal(self):
+        self.vcf_table.clicked.connect(self.func_test)
+
+    def func_test(self, item):
+        sf = "You clicked on {}".format(item.data())
+        print(sf)
+        item = self.vcf_table.selectedItems()
+        for i in item:
+            print(i.text())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     UIWindow = UI()
     sys.exit(app.exec_())
+
+    lalalalal

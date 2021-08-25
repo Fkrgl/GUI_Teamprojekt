@@ -1,5 +1,5 @@
 # Project exclude paths
 /venv/
 GUI.py
-GUI_functions.py
+TableModel.py
 OOP.py

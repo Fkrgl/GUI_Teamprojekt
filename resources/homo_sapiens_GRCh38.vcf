@@ -1,4 +1,4 @@
-##fileformat=VCFv4.0
+##fileformat=VCFv4.0x-special/nautilus-clipboard
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 22	17181903	rs7289170	A	G	.	.	.
 22	17188416	rs2231495	T	C	.	.	.

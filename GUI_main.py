@@ -5,6 +5,9 @@ from PySide6.QtCore import QFile, QIODevice
 from PyQt5.QtWidgets import *
 from PyQt5 import uic
 from TableModel import *
+from API import *
+import _thread, threading
+import time
 
 
 class UI(QMainWindow):
@@ -12,7 +15,8 @@ class UI(QMainWindow):
     def __init__(self):
         super(UI, self).__init__()
         uic.loadUi('Qt_designer/test_0.ui', self)
-        self.error_dialog = uic.loadUi('Qt_designer/error_dialog1.ui')
+        self.error_dialog1 = uic.loadUi('Qt_designer/error_dialog1.ui')
+        self.seleceted_anno_dialog = uic.loadUi('Qt_designer/seleceted_anno_dialog.ui')
 
         # main window
         self.setWindowTitle('SNV Annotation Tool')
@@ -35,8 +39,9 @@ class UI(QMainWindow):
         self.actionLoad_File.triggered.connect(self.load_file_from_filebrowser)
         self.search_button.clicked.connect(self.button_action)
         self.button_close.clicked.connect(self.button_close_action)
-        self.error_dialog.button_err_dlg.clicked.connect(self.hide_err_dlg_window)
+        self.error_dialog1.button_err_dlg.clicked.connect(self.hide_err_dlg_window)
         self.button_annotation.clicked.connect(self.display_selected_snv_annotations)  # this button should only work if a table is already diplayed
+
 
         self.show()
 
@@ -46,13 +51,34 @@ class UI(QMainWindow):
     def button_close_action(self):
         self.filter_window.hide()
 
-    def show_err_dlg_window(self):
-        self.error_dialog.move(self.mapToGlobal(
-            self.rect().center() - self.error_dialog.rect().center()))  # move error dialog to main window center
-        self.error_dialog.show()
+    def show_err_dlg_window(self, error_message):
+        self.error_dialog1.error_dlg_label.setText(error_message)
+        self.error_dialog1.error_dlg_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.error_dialog1.move(self.mapToGlobal(
+            self.rect().center() - self.error_dialog1.rect().center()))  # move error dialog to main window center
+        self.error_dialog1.show()
 
     def hide_err_dlg_window(self):
-        self.error_dialog.hide()
+        self.error_dialog1.hide()
+
+
+    def API_request_as_thread(self, variants):
+        """
+        starts api request as one thread for all annotations. Method informs user about status of the request after it
+        is finished
+        :param variants: snv information
+        """
+        try:
+            thread1 = API_thread(1, "Thread-2", 2, variants)
+            thread2 = Loading_thread(2, thread1, self)
+            # Start new Threads
+            thread1.start()
+            thread2.start()
+        except:
+            self.show_err_dlg_window('annotation request failed!')
+
+
+
 
     def load_file_from_filebrowser(self):
         """
@@ -64,17 +90,16 @@ class UI(QMainWindow):
             if get_header_count(file_path) != None:
                 header_count = get_header_count(file_path)
                 data = create_data_frame(file_path, header_count)
-                self.model = TableModel(data)
-                self.vcf_table.setModel(self.model)
+                self.vcf_model = TableModel(data)
+                self.vcf_table.setModel(self.vcf_model)
                 # load annotations in second tab
+                variants = get_variants_from_DataFrame(self.vcf_model._data)
+                self.API_request_as_thread(variants)
                 self.create_annotation_tab()
             else:
-                self.show_err_dlg_window()
+                self.show_err_dlg_window('selected file is not in VCF!')
         else:
-            self.show_err_dlg_window()
-
-            print("The selected file is not in variant call format!")
-            # open Error dialog window
+            self.show_err_dlg_window('selected file is not in VCF!')
 
     def create_annotation_tab(self):
         """
@@ -95,6 +120,8 @@ class UI(QMainWindow):
             print('Row %d is selected' % index.row())
         # get annotations from annotation table
         # display annotations in dialog table view window
+
+
 
 
 

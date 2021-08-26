@@ -11,9 +11,9 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Error</string>
+   <string>Message</string>
   </property>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="error_dlg_label">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -24,6 +24,9 @@
    </property>
    <property name="text">
     <string>selected file is not in VCF format!</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignBottom|Qt::AlignRight|Qt::AlignTrailing</set>
    </property>
   </widget>
   <widget class="QDialogButtonBox" name="button_err_dlg">

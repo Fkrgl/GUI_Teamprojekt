@@ -82,16 +82,16 @@ def region_caller(snv):
     if snv['ID'] != '' and snv['ID'] != '.':
         specID = snv['ID']
 
-    if snv['REF'] in ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']:
-        ref = snv['REF']
+    if snv['ALT'] in ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']:
+        ref = snv['ALT']
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
-    elif 'DUP' in snv['REF']:
+    elif 'DUP' in snv['ALT']:
         ref = 'DUP'
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
-    elif 'DEL' in snv['REF']:
+    elif 'DEL' in snv['ALT']:
         ref = 'DEL'
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
-    elif 'INV' in snv['REF']:
+    elif 'INV' in snv['ALT']:
         ref = 'INV'
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
         #variantCall = "REST API does not know INV"

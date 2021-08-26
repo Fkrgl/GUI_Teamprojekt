@@ -12,6 +12,16 @@ class UI(QMainWindow):
     def __init__(self):
         super(UI, self).__init__()
         uic.loadUi('Qt_designer/test_0.ui', self)
+        self.error_dialog = uic.loadUi('Qt_designer/error_dialog1.ui')
+
+        # main window
+        self.setWindowTitle('SNV Annotation Tool')
+        # move main window to center of screen
+        qtRectangle = self.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
+
         # menu bar
 
         # filter
@@ -25,10 +35,8 @@ class UI(QMainWindow):
         self.actionLoad_File.triggered.connect(self.load_file_from_filebrowser)
         self.search_button.clicked.connect(self.button_action)
         self.button_close.clicked.connect(self.button_close_action)
-        #self.vcf_table.clicked.connect(self.select_row)
-        self.button_annotation.clicked.connect(self.display_selected_snv_annotations)
-
-
+        self.error_dialog.button_err_dlg.clicked.connect(self.hide_err_dlg_window)
+        self.button_annotation.clicked.connect(self.display_selected_snv_annotations)  # this button should only work if a table is already diplayed
 
         self.show()
 
@@ -38,22 +46,33 @@ class UI(QMainWindow):
     def button_close_action(self):
         self.filter_window.hide()
 
-    def load_file_from_filebrowser(self):
+    def show_err_dlg_window(self):
+        self.error_dialog.move(self.mapToGlobal(
+            self.rect().center() - self.error_dialog.rect().center()))  # move error dialog to main window center
+        self.error_dialog.show()
 
+    def hide_err_dlg_window(self):
+        self.error_dialog.hide()
+
+    def load_file_from_filebrowser(self):
         """
         Filebrowser loads vcf file in a table and diplays it
         """
-
         filename = QFileDialog.getOpenFileName()
         file_path = filename[0]
         if 'vcf' in file_path:
-            header_count = get_header_count(file_path)
-            data = create_data_frame(file_path, header_count)
-            self.model = TableModel(data)
-            self.vcf_table.setModel(self.model)
-            # load annotations in second tab
-            self.create_annotation_tab()
+            if get_header_count(file_path) != None:
+                header_count = get_header_count(file_path)
+                data = create_data_frame(file_path, header_count)
+                self.model = TableModel(data)
+                self.vcf_table.setModel(self.model)
+                # load annotations in second tab
+                self.create_annotation_tab()
+            else:
+                self.show_err_dlg_window()
         else:
+            self.show_err_dlg_window()
+
             print("The selected file is not in variant call format!")
             # open Error dialog window
 

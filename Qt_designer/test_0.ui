@@ -70,7 +70,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../Desktop/search_icon.png</normaloff>../../../Desktop/search_icon.png</iconset>
+            <normaloff>../resources/search_icon.png</normaloff>../resources/search_icon.png</iconset>
           </property>
          </widget>
         </item>

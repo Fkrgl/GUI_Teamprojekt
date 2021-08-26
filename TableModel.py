@@ -3,6 +3,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 import pandas as pd
 
+
+
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self, data):
         super(TableModel, self).__init__()
@@ -28,7 +30,12 @@ class TableModel(QtCore.QAbstractTableModel):
             if orientation == Qt.Vertical:
                 return str(self._data.index[section])
 
-def get_header_count( path):
+
+def get_header_count(path):
+    """
+    :param path: path to VCF file
+    :return: line number of header or None if header not found
+    """
     header_count = 0
     with open(path, 'r') as file:
         for line in file:
@@ -42,4 +49,7 @@ def get_header_count( path):
 
 def create_data_frame(path, header_count):
     data = pd.read_csv(path, sep='\t', header=header_count)
+    colnames = list(data.columns)
+    colnames[0] = colnames[0][1:]       # remove '#'
+    data.columns = colnames
     return data

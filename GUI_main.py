@@ -93,7 +93,8 @@ class UI(QMainWindow):
         indexes = self.vcf_table.selectionModel().selectedRows()
         for index in sorted(indexes):
             print('Row %d is selected' % index.row())
-        # rest has to be implemented
+        # get annotations from annotation table
+        # display annotations in dialog table view window
 
 
 

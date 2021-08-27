@@ -31,7 +31,7 @@ class Loading_thread(threading.Thread):
 def wait_for_loading(thread, QMainWindow):
     while thread.is_alive():
         time.sleep(1)
-    QMainWindow.show_err_dlg_window('Annotation requests finished!')
+    QMainWindow.show_err_dlg_window('Annotation requests finished!', 'Message')
 
 
 def get_variants():

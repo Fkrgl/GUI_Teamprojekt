@@ -51,7 +51,8 @@ class UI(QMainWindow):
     def button_close_action(self):
         self.filter_window.hide()
 
-    def show_err_dlg_window(self, error_message):
+    def show_err_dlg_window(self, error_message, window_title):
+        self.error_dialog1.setWindowTitle(window_title)
         self.error_dialog1.error_dlg_label.setText(error_message)
         self.error_dialog1.error_dlg_label.setAlignment(QtCore.Qt.AlignCenter)
         self.error_dialog1.move(self.mapToGlobal(
@@ -75,7 +76,7 @@ class UI(QMainWindow):
             thread1.start()
             thread2.start()
         except:
-            self.show_err_dlg_window('annotation request failed!')
+            self.show_err_dlg_window('annotation request failed!', 'Error')
 
 
 
@@ -97,9 +98,9 @@ class UI(QMainWindow):
                 self.API_request_as_thread(variants)
                 self.create_annotation_tab()
             else:
-                self.show_err_dlg_window('selected file is not in VCF!')
+                self.show_err_dlg_window('selected file is not in VCF!', 'Error')
         else:
-            self.show_err_dlg_window('selected file is not in VCF!')
+            self.show_err_dlg_window('selected file is not in VCF!', 'Error')
 
     def create_annotation_tab(self):
         """

@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1300</width>
-    <height>950</height>
+    <width>1473</width>
+    <height>944</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">border-top-color: rgb(173, 127, 168);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -20,36 +23,25 @@
       <property name="spacing">
        <number>0</number>
       </property>
-      <item row="2" column="3">
-       <layout class="QGridLayout" name="grid_filter_window">
+      <item row="1" column="0" rowspan="2" colspan="4">
+       <layout class="QHBoxLayout" name="horizontalLayout">
         <property name="spacing">
+         <number>3</number>
+        </property>
+        <property name="sizeConstraint">
+         <enum>QLayout::SetFixedSize</enum>
+        </property>
+        <property name="leftMargin">
          <number>0</number>
         </property>
-       </layout>
-      </item>
-      <item row="3" column="0" colspan="4">
-       <widget class="QLabel" name="label">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+        <property name="topMargin">
+         <number>3</number>
         </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>100</height>
-         </size>
+        <property name="rightMargin">
+         <number>3</number>
         </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0" rowspan="2" colspan="4">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <property name="sizeConstraint">
-         <enum>QLayout::SetDefaultConstraint</enum>
+        <property name="bottomMargin">
+         <number>3</number>
         </property>
         <item>
          <widget class="QToolButton" name="search_button">
@@ -89,7 +81,7 @@
            </size>
           </property>
           <property name="text">
-           <string>...</string>
+           <string>A</string>
           </property>
          </widget>
         </item>
@@ -118,19 +110,39 @@
            <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeType">
-           <enum>QSizePolicy::MinimumExpanding</enum>
+           <enum>QSizePolicy::Expanding</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>35</width>
+            <width>40</width>
             <height>20</height>
            </size>
           </property>
          </spacer>
         </item>
+        <item>
+         <widget class="QLabel" name="label_loading">
+          <property name="text">
+           <string>loading...  </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="progressBar">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="value">
+           <number>0</number>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
-      <item row="2" column="1" colspan="2">
+      <item row="3" column="1" colspan="2">
        <widget class="QFrame" name="filter_window">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -142,6 +154,12 @@
          <size>
           <width>375</width>
           <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>1666666</height>
          </size>
         </property>
         <property name="styleSheet">
@@ -508,8 +526,11 @@
         </layout>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QTabWidget" name="tab_window_tables">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
@@ -535,6 +556,9 @@
           </property>
           <item>
            <widget class="QTableView" name="vcf_table">
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
             <property name="alternatingRowColors">
              <bool>true</bool>
             </property>
@@ -565,6 +589,35 @@
         </widget>
        </widget>
       </item>
+      <item row="3" column="3">
+       <layout class="QGridLayout" name="grid_filter_window">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+       </layout>
+      </item>
+      <item row="4" column="0" colspan="4">
+       <widget class="QLabel" name="label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <layout class="QFormLayout" name="formLayout_2"/>
+      </item>
      </layout>
     </item>
    </layout>
@@ -574,9 +627,13 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1300</width>
+     <width>1473</width>
      <height>22</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                      stop:0 white, stop:1 lightblue);   spacing: 3px;</string>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">

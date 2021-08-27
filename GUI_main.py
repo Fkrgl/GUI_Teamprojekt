@@ -27,6 +27,8 @@ class UI(QMainWindow):
         self.move(qtRectangle.topLeft())
 
         # menu bar
+        self.label_loading.setHidden(True)
+        self.progressBar.setHidden(True)
 
         # filter
         self.filter_window.hide()
@@ -62,6 +64,15 @@ class UI(QMainWindow):
     def hide_err_dlg_window(self):
         self.error_dialog1.hide()
 
+    def set_progressbar_maximum(self, maximum):
+        self.progressBar.setMaximum(maximum)
+
+    def set_progress_bar_value(self, counter):
+        self.progressBar.setValue(counter)
+
+    def set_progressbar_visisbility(self, isHidden):
+        self.progressBar.setHidden(isHidden)
+        self.label_loading.setHidden(isHidden)
 
     def API_request_as_thread(self, variants):
         """
@@ -70,16 +81,15 @@ class UI(QMainWindow):
         :param variants: snv information
         """
         try:
-            thread1 = API_thread(1, "Thread-2", 2, variants)
+            thread1 = API_thread(1, "Thread-2", 2, variants, self)
             thread2 = Loading_thread(2, thread1, self)
             # Start new Threads
             thread1.start()
             thread2.start()
+            self.set_progressbar_maximum(len(variants))
+            self.set_progressbar_visisbility(False)               # make progressbar visisble
         except:
             self.show_err_dlg_window('annotation request failed!', 'Error')
-
-
-
 
     def load_file_from_filebrowser(self):
         """
@@ -121,8 +131,6 @@ class UI(QMainWindow):
             print('Row %d is selected' % index.row())
         # get annotations from annotation table
         # display annotations in dialog table view window
-
-
 
 
 

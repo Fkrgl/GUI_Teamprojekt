@@ -6,15 +6,16 @@ from PyQt5.QtWidgets import *
 
 
 class API_thread(threading.Thread):
-    def __init__(self, threadID, name, counter, variants):
+    def __init__(self, threadID, name, counter, variants, QMainWindow):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.counter = counter
         self.varaints = variants
+        self.QMainWindow = QMainWindow
 
     def run(self):
-        fetch_annotation(self.varaints)
+        fetch_annotation(self.varaints, self.QMainWindow)
 
 
 class Loading_thread(threading.Thread):
@@ -32,6 +33,7 @@ def wait_for_loading(thread, QMainWindow):
     while thread.is_alive():
         time.sleep(1)
     QMainWindow.show_err_dlg_window('Annotation requests finished!', 'Message')
+    QMainWindow.set_progressbar_visisbility(True)
 
 
 def get_variants():
@@ -104,13 +106,15 @@ def region_caller(snv):
 
 ''' performs actual task. Calls each item of the list of inquiries created in get_variants() in the REST API and prints out the resulting annotations as a list of dictionaries (?) '''
 
-def fetch_annotation(variants):
+def fetch_annotation(variants, QMainWindow):
 
     server = "https://rest.ensembl.org"
     #ext = "/vep/human/region/21:25587758-25587758/A?"
 
     #ext = "/vep/human/hgvs/ENST00000366667:c.803C>T?"
     #ext =  "/vep/human/region/genomic region/" # vep/:species/region/:region/:allele/
+    progress_count = 0
+    n_variants = len(variants)
     for variant in variants:
         currentID = variant
         print(variant)
@@ -132,6 +136,9 @@ def fetch_annotation(variants):
                 print(repr(decoded)) # prints list as string
         except:
             pass
+        progress_count += 1
+        QMainWindow.set_progress_bar_value(progress_count)
+
 
 
 

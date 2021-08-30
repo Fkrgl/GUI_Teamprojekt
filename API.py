@@ -33,7 +33,8 @@ def wait_for_loading(thread, QMainWindow):
     while thread.is_alive():
         time.sleep(1)
     QMainWindow.show_err_dlg_window('Annotation requests finished!', 'Message')
-    QMainWindow.set_progressbar_visisbility(True)
+    QMainWindow.set_progressbar_visibility(True)
+
 
 
 def get_variants():
@@ -114,7 +115,6 @@ def fetch_annotation(variants, QMainWindow):
     #ext = "/vep/human/hgvs/ENST00000366667:c.803C>T?"
     #ext =  "/vep/human/region/genomic region/" # vep/:species/region/:region/:allele/
     progress_count = 0
-    n_variants = len(variants)
     for variant in variants:
         currentID = variant
         print(variant)
@@ -134,10 +134,12 @@ def fetch_annotation(variants, QMainWindow):
                 decoded = r.json() # list
                 decoded.insert(0, currentID) # inserts id at front of list (use to access specific file id in db respectively to  check whether id is already present in db or if api has to be called)
                 print(repr(decoded)) # prints list as string
+                # maybe give each result to a function in the main function to splice them and directly saves them in the annotation data frame
         except:
             pass
         progress_count += 1
-        QMainWindow.set_progress_bar_value(progress_count)
+        QMainWindow.set_progressbar_value(progress_count)
+
 
 
 

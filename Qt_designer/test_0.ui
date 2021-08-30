@@ -57,6 +57,9 @@
             <height>30</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Filter</string>
+          </property>
           <property name="text">
            <string>...</string>
           </property>
@@ -79,6 +82,9 @@
             <width>30</width>
             <height>30</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>Annotations</string>
           </property>
           <property name="text">
            <string>A</string>

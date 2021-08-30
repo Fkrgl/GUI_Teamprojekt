@@ -67,10 +67,10 @@ class UI(QMainWindow):
     def set_progressbar_maximum(self, maximum):
         self.progressBar.setMaximum(maximum)
 
-    def set_progress_bar_value(self, counter):
+    def set_progressbar_value(self, counter):
         self.progressBar.setValue(counter)
 
-    def set_progressbar_visisbility(self, isHidden):
+    def set_progressbar_visibility(self, isHidden):
         self.progressBar.setHidden(isHidden)
         self.label_loading.setHidden(isHidden)
 
@@ -85,9 +85,9 @@ class UI(QMainWindow):
             thread2 = Loading_thread(2, thread1, self)
             # Start new Threads
             thread1.start()
-            thread2.start()
-            self.set_progressbar_maximum(len(variants))
-            self.set_progressbar_visisbility(False)               # make progressbar visisble
+            result = thread2.start()
+            self.set_progressbar_maximum(len(variants))           # set maximal value to number of varaints
+            self.set_progressbar_visibility(False)               # make progressbar visible
         except:
             self.show_err_dlg_window('annotation request failed!', 'Error')
 

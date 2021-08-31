@@ -30,6 +30,12 @@ class TableModel(QtCore.QAbstractTableModel):
             if orientation == Qt.Vertical:
                 return str(self._data.index[section])
 
+    def update_table(self, new_data):
+        self.layoutAboutToBeChanged.emit()
+        self._data = self._data.append(new_data)
+        self.layoutChanged.emit()
+        self.dataChanged()
+
 
 def get_header_count(path):
     """

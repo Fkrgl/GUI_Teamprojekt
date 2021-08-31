@@ -3,11 +3,35 @@ from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QFile, QIODevice
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 from PyQt5 import uic
 from TableModel import *
 from API import *
 import _thread, threading
+import concurrent.futures
 import time
+
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+    result = pyqtSignal(list)
+
+    def __init__(self, variants, parent=None):
+        QObject.__init__(self, parent)
+        self.dataForTable = []
+        self.variants = variants
+        # or some other needed attributes
+
+
+    def run(self):
+        """Long-running task."""
+        self.dataForTable = fetch_annotation_new(self.variants, QMainWindow)
+        self.finished.emit()
+        self.result.emit(self.dataForTable)
+
+    # find out what this emmit can do
+    # it seems to pass infromation to the gui, you could try to use it as a return signal after the process emmits a
+    # finished signal
 
 
 class UI(QMainWindow):
@@ -74,52 +98,44 @@ class UI(QMainWindow):
         self.progressBar.setHidden(isHidden)
         self.label_loading.setHidden(isHidden)
 
-    def API_request_as_thread(self, variants):
-        """
-        starts api request as one thread for all annotations. Method informs user about status of the request after it
-        is finished
-        :param variants: snv information
-        """
-        try:
-            thread1 = API_thread(1, "Thread-2", 2, variants, self)
-            thread2 = Loading_thread(2, thread1, self)
-            # Start new Threads
-            thread1.start()
-            result = thread2.start()
-            self.set_progressbar_maximum(len(variants))           # set maximal value to number of varaints
-            self.set_progressbar_visibility(False)               # make progressbar visible
-        except:
-            self.show_err_dlg_window('annotation request failed!', 'Error')
-
     def load_file_from_filebrowser(self):
         """
-        Filebrowser loads vcf file in a table and diplays it
+        Filebrowser loads vcf file in a table and diplays it. Also starts API request and displayes the annotations in
+        the annotation table
         """
         filename = QFileDialog.getOpenFileName()
         file_path = filename[0]
         if 'vcf' in file_path:
             if get_header_count(file_path) != None:
+
+                # set up vcf table
                 header_count = get_header_count(file_path)
-                data = create_data_frame(file_path, header_count)
-                self.vcf_model = TableModel(data)
+                data_vcf = create_data_frame(file_path, header_count)
+                self.vcf_model = TableModel(data_vcf)
                 self.vcf_table.setModel(self.vcf_model)
-                # load annotations in second tab
                 variants = get_variants_from_DataFrame(self.vcf_model._data)
-                self.API_request_as_thread(variants)
-                self.create_annotation_tab()
+
+                # set name of annotation tab
+                self.tab_window_tables.setTabText(0, 'VCF')
+
+                # call API and display annotation table
+                self.call_server_as_therad(variants)
+
             else:
                 self.show_err_dlg_window('selected file is not in VCF!', 'Error')
         else:
             self.show_err_dlg_window('selected file is not in VCF!', 'Error')
 
+
+
+
     def create_annotation_tab(self):
-        """
-        creates a second tab with the annotation table
-        """
         self.annotation_tab = QWidget()
+        self.annotation_tab.layout = QVBoxLayout()
+        self.annotation_tab.layout.setContentsMargins(0, 0, 0, 0)
+        self.annotation_tab.layout.addWidget(self.annotation_table)
+        self.annotation_tab.setLayout(self.annotation_tab.layout)
         self.tab_window_tables.addTab(self.annotation_tab, "Annotations")
-        self.tab_window_tables.setTabText(0, 'VCF')
-        # load annotations in table
 
     def display_selected_snv_annotations(self):
         """
@@ -132,7 +148,59 @@ class UI(QMainWindow):
         # get annotations from annotation table
         # display annotations in dialog table view window
 
+    def create_annotation_table(self, data):
+        self.annotation_table = QTableView()
+        self.annotation_table.setAlternatingRowColors(True)
+        self.annotation_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.annotation_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.annotation_table.setStyleSheet("alternate-background-color: PowderBlue")
+        self.annotation_table_model = TableModel(data)
+        self.annotation_table.setModel(self.annotation_table_model)
 
+    def add_annotation_to_table(self, annotations):
+        """
+        extracts important features from annotations of API and adds them as a new annotation to the annotation table
+        :param annotation: return dictionary from REST API for one SNP request
+        """
+        entries = []
+        print("add_annotation_to_table")
+        # parse the annotations for the table
+        for anno in annotations:
+            entry = {'start' : anno['start'], 'input' : anno['input']}
+            entries.append(entry)
+            print(entry)
+        data = pd.DataFrame(data=entries, columns=['start', 'input'])
+        print(data)
+        # create table model with given data
+        self.create_annotation_table(data)
+        self.create_annotation_tab()
+
+
+    def call_server_as_therad(self, variants):
+        """
+        send the SNVs to the server and siplay the results in an annotation table
+        :param variants: rows of vcf file
+        """
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = Worker(variants)
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        #self.worker.progress.connect(self.reportProgress)
+        # Step 6: Start the thread
+        self.thread.start()
+
+        # Final resets
+        self.thread.finished.connect(self.get_annotation_data_from_thread)
+
+    def get_annotation_data_from_thread(self):
+        self.add_annotation_to_table(self.worker.dataForTable)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

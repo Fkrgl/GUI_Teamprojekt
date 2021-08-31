@@ -36,7 +36,6 @@ def wait_for_loading(thread, QMainWindow):
     QMainWindow.set_progressbar_visibility(True)
 
 
-
 def get_variants():
     annotationList = []
 
@@ -74,6 +73,7 @@ def get_variants_from_DataFrame(DataFrame):
 
 
 def region_caller(snv):
+    possibleCharacters = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']
 
     if snv['CHROM'] != '':
         chromosome = re.findall(r'\d+', str(snv['CHROM'])) # extracts only the integer from the chromosome-notation (e.g. if 'chr1' --> 1)
@@ -84,10 +84,19 @@ def region_caller(snv):
 
     if snv['ID'] != '' and snv['ID'] != '.':
         specID = snv['ID']
+        
+    if len(snv['ALT']) == 1:
+        if snv['ALT'] in possibleCharacters:
+            alt = snv['ALT']
+            variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
 
-    if snv['ALT'] in ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']:
-        ref = snv['ALT']
-        variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
+    elif len(snv['ALT']) > 1:
+
+        matched_list = [characters in possibleCharacters for characters in snv[4]]
+        if all(matched_list) == True:
+            alt = snv['ALT']
+            variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
+
     elif 'DUP' in snv['ALT']:
         ref = 'DUP'
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
@@ -109,7 +118,8 @@ def region_caller(snv):
 
 def fetch_annotation(variants, QMainWindow):
 
-    server = "https://rest.ensembl.org"
+    server = "https://grch37.rest.ensembl.org"
+    #server = "https://rest.ensembl.org"
     #ext = "/vep/human/region/21:25587758-25587758/A?"
 
     #ext = "/vep/human/hgvs/ENST00000366667:c.803C>T?"
@@ -133,20 +143,53 @@ def fetch_annotation(variants, QMainWindow):
 
                 decoded = r.json() # list
                 decoded.insert(0, currentID) # inserts id at front of list (use to access specific file id in db respectively to  check whether id is already present in db or if api has to be called)
-                print(repr(decoded)) # prints list as string
+                #print(repr(decoded[1])) # prints list as string
+                print(decoded[1])
+                for key in decoded[1]:
+                    print(key, ' :')
+                    print(decoded[1][key])
+                    print()
                 # maybe give each result to a function in the main function to splice them and directly saves them in the annotation data frame
+                QMainWindow.add_annotation_to_table(decoded[1])
         except:
             pass
         progress_count += 1
         QMainWindow.set_progressbar_value(progress_count)
 
 
+def fetch_annotation_new(variants, QMainWindow):
 
+    server = "https://grch37.rest.ensembl.org"
+    #server = "https://rest.ensembl.org"
+    results = []
+    progress_count = 0
+    for variant in variants:
+        currentID = variant
+        print(variant)
+        try:
+            if variant == "Cant perform on this (ref-) notation" or variant == "REST API does not know INV":
+                #print("Can't perform annotation. Wrong datatype")
+                print(currentID)
+                pass
+            else:
+                ext = currentID
+                r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
 
+                if not r.ok:
+                    r.raise_for_status()
+                    sys.exit()
 
+                decoded = r.json() # list
+                decoded.insert(0, currentID) # inserts id at front of list (use to access specific file id in db respectively to  check whether id is already present in db or if api has to be called)
+                #print(repr(decoded[1])) # prints list as string
+                print(decoded[1])
+                results.append(decoded[1])
+        except:
+            pass
+
+    return results
 
 
 if __name__ == "__main__":
     fetch_annotation()
 
-#getVariants()

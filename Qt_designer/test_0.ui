@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1473</width>
-    <height>944</height>
+    <width>1101</width>
+    <height>905</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -569,7 +569,7 @@
              <bool>true</bool>
             </property>
             <property name="selectionMode">
-             <enum>QAbstractItemView::MultiSelection</enum>
+             <enum>QAbstractItemView::SingleSelection</enum>
             </property>
             <property name="selectionBehavior">
              <enum>QAbstractItemView::SelectRows</enum>
@@ -633,7 +633,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1473</width>
+     <width>1101</width>
      <height>22</height>
     </rect>
    </property>

@@ -24,7 +24,6 @@ class Worker(QObject):
 
 
     def run(self):
-        """Long-running task."""
         self.dataForTable = fetch_annotation_new(self.variants, QMainWindow)
         self.finished.emit()
         self.result.emit(self.dataForTable)
@@ -166,12 +165,26 @@ class UI(QMainWindow):
         print("add_annotation_to_table")
         # parse the annotations for the table
         for anno in annotations:
-            entry = {'start' : anno['start'], 'input' : anno['input']}
-            entries.append(entry)
-            print(entry)
-        data = pd.DataFrame(data=entries, columns=['start', 'input'])
-        print(data)
-        # create table model with given data
+            '''entry = {'start' : anno['start'],
+                     'input' : anno['input'],
+                     'allele_string' : anno['allele_string'],
+                     'seq_region_name':anno['seq_region_name']}'''
+            for conseqeunces in anno['transcript_consequences']:
+                entry = {'seq_region_name': anno['seq_region_name'],
+                         'start': anno['start'],
+                         'strand' : anno['strand'],
+                         'input': anno['input'],
+                         'allele_string': anno['allele_string'],
+                         'transcript_id' : conseqeunces['transcript_id'],
+                         'biotype' : conseqeunces['biotype'],
+                         'impact' : conseqeunces['impact'],
+                         'consequnce_terms' : ''.join(conseqeunces['consequence_terms'])}
+                entries.append(entry)
+
+                print(conseqeunces)
+        data = pd.DataFrame(data=entries, columns=['seq_region_name','start', 'input', 'allele_string', 'transcript_id', 'biotype', 'impact', 'consequnce_terms'])
+        # print(data)
+        #create table model with given data
         self.create_annotation_table(data)
         self.create_annotation_tab()
 

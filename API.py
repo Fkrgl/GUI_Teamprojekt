@@ -75,35 +75,35 @@ def get_variants_from_DataFrame(DataFrame):
 def region_caller(snv):
     possibleCharacters = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']
 
-    if snv['CHROM'] != '':
-        chromosome = re.findall(r'\d+', str(snv['CHROM'])) # extracts only the integer from the chromosome-notation (e.g. if 'chr1' --> 1)
+    if snv['chrom'] != '':
+        chromosome = re.findall(r'\d+', str(snv['chrom'])) # extracts only the integer from the chromosome-notation (e.g. if 'chr1' --> 1)
         chromosome = chromosome[0]
 
-    if snv['POS'] != '':
-        pos = snv['POS']
+    if snv['pos'] != '':
+        pos = snv['pos']
 
-    if snv['ID'] != '' and snv['ID'] != '.':
-        specID = snv['ID']
+    if snv['id'] != '' and snv['id'] != '.':
+        specID = snv['id']
         
-    if len(snv['ALT']) == 1:
-        if snv['ALT'] in possibleCharacters:
-            alt = snv['ALT']
+    if len(snv['alt']) == 1:
+        if snv['alt'] in possibleCharacters:
+            alt = snv['alt']
             variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
 
-    elif len(snv['ALT']) > 1:
+    elif len(snv['alt']) > 1:
 
         matched_list = [characters in possibleCharacters for characters in snv[4]]
         if all(matched_list) == True:
-            alt = snv['ALT']
+            alt = snv['alt']
             variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
 
-    elif 'DUP' in snv['ALT']:
+    elif 'DUP' in snv['alt']:
         ref = 'DUP'
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
-    elif 'DEL' in snv['ALT']:
+    elif 'DEL' in snv['alt']:
         ref = 'DEL'
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
-    elif 'INV' in snv['ALT']:
+    elif 'INV' in snv['alt']:
         ref = 'INV'
         variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
         #variantCall = "REST API does not know INV"

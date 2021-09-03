@@ -57,5 +57,7 @@ def create_data_frame(path, header_count):
     data = pd.read_csv(path, sep='\t', header=header_count)
     colnames = list(data.columns)
     colnames[0] = colnames[0][1:]       # remove '#'
-    data.columns = colnames
+    #data.columns = colnames
+    data.columns = [name.lower() for name in colnames]
+    print(data.columns)
     return data

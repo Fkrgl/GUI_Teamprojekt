@@ -1,4 +1,5 @@
 import sys
+
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QFile, QIODevice
@@ -7,6 +8,7 @@ from PyQt5.QtCore import *
 from PyQt5 import uic
 from TableModel import *
 from API import *
+import pandas as pd
 import _thread, threading
 import concurrent.futures
 import time

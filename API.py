@@ -85,7 +85,7 @@ def fetch_annotation_new(variants, QMainWindow):
         except:
             pass
 
-    return results
+    return results # results
 
 
 if __name__ == "__main__":

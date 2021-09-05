@@ -53,6 +53,8 @@ class UI(QMainWindow):
         self.move(qtRectangle.topLeft())
 
         # menu bar
+        self.button_annotation.setDisabled(True)
+        self.button_export.setDisabled(True)
         self.label_loading.setHidden(True)
         self.progressBar.setHidden(True)
 
@@ -128,6 +130,7 @@ class UI(QMainWindow):
                 # call API and display annotation table
                 self.call_server_as_therad(variants)
                 self.tables_loaded = True
+                self.button_annotation.setEnabled(True)
 
             else:
                 self.show_err_dlg_window('selected file is not in VCF!', 'Error')

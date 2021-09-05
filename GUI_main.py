@@ -11,6 +11,9 @@ import _thread, threading
 import concurrent.futures
 import time
 
+
+
+'''Think about making a own script for this class'''
 class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
@@ -39,7 +42,7 @@ class UI(QMainWindow):
         super(UI, self).__init__()
         uic.loadUi('Qt_designer/test_0.ui', self)
         self.error_dialog1 = uic.loadUi('Qt_designer/error_dialog1.ui')
-        self.seleceted_anno_dialog = uic.loadUi('Qt_designer/seleceted_anno_dialog.ui')
+        self.selected_anno_dialog = uic.loadUi('Qt_designer/selected_anno_dialog.ui')
 
         # main window
         self.setWindowTitle('SNV Annotation Tool')
@@ -141,11 +144,30 @@ class UI(QMainWindow):
         save selected row indices of the (annotation) table, search for each selected snv (row) all annotations and dis-
         playes annotations in a new table in a pop up window
         """
-        indexes = self.vcf_table.selectionModel().selectedRows()
-        for index in sorted(indexes):
-            print('Row %d is selected' % index.row())
-        # get annotations from annotation table
-        # display annotations in dialog table view window
+        indices = self.vcf_table.selectionModel().selectedRows()
+        selected_annotations = pd.DataFrame(columns=self.annotation_table_model._data.columns)
+        for index in indices:
+            snv = self.vcf_model.get_row(index.row())
+            selected_data = self.get_annotations_of_selected_snv(snv)
+            selected_annotations = selected_annotations.append(selected_data, ignore_index=True)
+
+        # set up table with annotations
+        print(selected_annotations)
+        self.selected_anno_table_model = TableModel(selected_annotations)
+        self.selected_anno_dialog.selected_anno_table.setModel(self.selected_anno_table_model)
+        self.selected_anno_dialog.selected_anno_table.setAlternatingRowColors(True)
+        self.selected_anno_dialog.selected_anno_table.setStyleSheet("alternate-background-color: PowderBlue")
+        self.selected_anno_dialog.show()
+
+
+    def get_annotations_of_selected_snv(self, snv):
+        anno_data = self.annotation_table_model._data
+        selected_data = anno_data.loc[(anno_data['pos'] == snv['pos'])
+                            & (anno_data['chrom'] == snv['chrom'])
+                            & (anno_data['ref'] == snv['ref'])
+                            & (anno_data['alt'] == snv['alt'])]
+        return selected_data
+
 
     def create_annotation_table(self, data):
         self.annotation_table = QTableView()
@@ -170,20 +192,25 @@ class UI(QMainWindow):
                      'allele_string' : anno['allele_string'],
                      'seq_region_name':anno['seq_region_name']}'''
             for conseqeunces in anno['transcript_consequences']:
-                entry = {'seq_region_name': anno['seq_region_name'],
-                         'start': anno['start'],
+                bases = anno['allele_string'].split('/')
+                ref = bases[0]
+                alt = bases[1]
+                entry = {'chr': 'chr' + str(anno['seq_region_name']),
+                         'pos': anno['start'],
                          'strand' : anno['strand'],
                          'input': anno['input'],
-                         'allele_string': anno['allele_string'],
+                         'ref': ref,
+                         'alt' : alt,
                          'transcript_id' : conseqeunces['transcript_id'],
                          'biotype' : conseqeunces['biotype'],
                          'impact' : conseqeunces['impact'],
                          'consequnce_terms' : ''.join(conseqeunces['consequence_terms'])}
                 entries.append(entry)
+                print('chr' + str(anno['seq_region_name']))
 
                 print(conseqeunces)
-        data = pd.DataFrame(data=entries, columns=['seq_region_name','start', 'input', 'allele_string', 'transcript_id', 'biotype', 'impact', 'consequnce_terms'])
-        # print(data)
+        data = pd.DataFrame(data=entries, columns=['chr', 'pos', 'input', 'ref', 'alt', 'transcript_id', 'biotype', 'impact', 'consequnce_terms'])
+        data = data.rename(columns={'chr' : 'chrom'})
         #create table model with given data
         self.create_annotation_table(data)
         self.create_annotation_tab()

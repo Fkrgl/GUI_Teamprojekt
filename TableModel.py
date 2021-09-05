@@ -21,6 +21,9 @@ class TableModel(QtCore.QAbstractTableModel):
     def columnCount(self, index):
         return self._data.shape[1]
 
+    def get_row(self, row_index):
+        return self._data.iloc[row_index]
+
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.
         if role == Qt.DisplayRole:

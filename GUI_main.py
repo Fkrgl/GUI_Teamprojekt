@@ -62,6 +62,7 @@ class UI(QMainWindow):
         # table
         self.vcf_table.setAlternatingRowColors(True)
         self.vcf_table.setStyleSheet("alternate-background-color: PowderBlue")
+        self.tables_loaded = False
 
 
         self.actionLoad_File.triggered.connect(self.load_file_from_filebrowser)
@@ -105,6 +106,10 @@ class UI(QMainWindow):
         Filebrowser loads vcf file in a table and diplays it. Also starts API request and displayes the annotations in
         the annotation table
         """
+        # check if a file is already loaded. If so delete the anno tab
+        if self.tables_loaded:
+            self.tab_window_tables.removeTab(1)
+        # open file browser
         filename = QFileDialog.getOpenFileName()
         file_path = filename[0]
         if 'vcf' in file_path:
@@ -122,6 +127,7 @@ class UI(QMainWindow):
 
                 # call API and display annotation table
                 self.call_server_as_therad(variants)
+                self.tables_loaded = True
 
             else:
                 self.show_err_dlg_window('selected file is not in VCF!', 'Error')

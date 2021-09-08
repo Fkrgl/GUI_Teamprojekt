@@ -251,6 +251,12 @@ class UI(QMainWindow):
     def get_annotation_data_from_thread(self):
         self.add_annotation_to_table(self.worker.dataForTable)
 
+    def safe_variants_to_file(self):
+        """
+
+        """
+        pass
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     UIWindow = UI()

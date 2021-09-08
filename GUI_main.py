@@ -32,6 +32,8 @@ class UI(QMainWindow):
         self.move(qtRectangle.topLeft())
 
         # menu bar
+        self.button_annotation.setDisabled(True)
+        self.button_export.setDisabled(True)
         self.label_loading.setHidden(True)
         self.progressBar.setHidden(True)
 
@@ -41,6 +43,7 @@ class UI(QMainWindow):
         # table
         self.vcf_table.setAlternatingRowColors(True)
         self.vcf_table.setStyleSheet("alternate-background-color: PowderBlue")
+        self.tables_loaded = False
 
 
         self.actionLoad_File.triggered.connect(self.load_file_from_filebrowser)
@@ -266,20 +269,42 @@ class UI(QMainWindow):
         self.worker = Worker(variants)
         # Step 4: Move worker to the thread
         self.worker.moveToThread(self.thread)
+        # progress bar
+        self.set_progressbar_maximum(len(variants))
+        self.set_progressbar_visibility(False)
         # Step 5: Connect signals and slots
         self.thread.started.connect(self.worker.run)
+        self.worker.change_progress_value.connect(self.set_progressbar_value)
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
-        #self.worker.progress.connect(self.reportProgress)
         # Step 6: Start the thread
         self.thread.start()
 
         # Final resets
+        isHidden = True
+        message = 'Annotations finished!'
+        title = 'Notification'
+        # get data
         self.thread.finished.connect(self.get_annotation_data_from_thread)
+        # hide progress bar
+        self.thread.finished.connect(lambda: self.set_progressbar_visibility(isHidden))
+        # display notification window after thread finished
+        self.thread.finished.connect(lambda: self.show_err_dlg_window(error_message=message, window_title=title))
+        # make annotation button available
+        self.thread.finished.connect(self.unlock_annotation_button)
 
     def get_annotation_data_from_thread(self):
         self.add_annotation_to_table(self.worker.dataForTable)
+
+    def unlock_annotation_button(self):
+        self.button_annotation.setEnabled(True)
+
+
+    def safe_variants_to_file(self):
+        """
+        """
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

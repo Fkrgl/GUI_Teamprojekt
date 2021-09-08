@@ -21,7 +21,7 @@ class UI(QMainWindow):
         super(UI, self).__init__()
         uic.loadUi('Qt_designer/test_0.ui', self)
         self.error_dialog1 = uic.loadUi('Qt_designer/error_dialog1.ui')
-        self.seleceted_anno_dialog = uic.loadUi('Qt_designer/seleceted_anno_dialog.ui')
+        self.selected_anno_dialog = uic.loadUi('Qt_designer/selected_anno_dialog.ui')
 
         # main window
         self.setWindowTitle('SNV Annotation Tool')

@@ -196,10 +196,6 @@ class UI(QMainWindow):
         print("add_annotation_to_table")
         # parse the annotations for the table
         for anno in annotations:
-            '''entry = {'start' : anno['start'],
-                     'input' : anno['input'],
-                     'allele_string' : anno['allele_string'],
-                     'seq_region_name':anno['seq_region_name']}'''
             for conseqeunces in anno['transcript_consequences']:
                 bases = anno['allele_string'].split('/')
                 ref = bases[0]

@@ -3,6 +3,8 @@ import requests
 import sys, re, threading
 import time
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+
 
 
 def get_variants_from_DataFrame(DataFrame):
@@ -60,46 +62,65 @@ def region_caller(snv):
 
 ''' performs actual task. Calls each item of the list of inquiries created in get_variants() in the REST API and prints out the resulting annotations as a list of dictionaries (?) '''
 
-def fetch_annotation_new(variants, QMainWindow):
-    """
-    sends Annotation requests to localhost REST API server
-    :param: String -> variant request string (created in get_variants_from_DataFrame
-    :rtype: List of Annotation results from Server
-    """
-    server = "http://192.168.178.95:5000"
 
-    results = []
-    progress_count = 0
-    errorDict = {}
 
-    for variant in variants:
-        try:
-            if variant == "Cant perform on this (ref-) notation" or variant == "REST API does not know INV":
-                #print("Can't perform annotation. Wrong datatype")
-                print(variant)
+class Worker(QObject):
+    finished = pyqtSignal()
+    change_progress_value = pyqtSignal(int)
+    result = pyqtSignal(list)
+
+    def __init__(self, variants, parent=None):
+        QObject.__init__(self, parent)
+        self.dataForTable = []
+        self.variants = variants
+        # or some other needed attributes
+
+
+    def run(self):
+        """
+        sends Annotation requests to localhost REST API server
+        :param: String -> variant request string (created in get_variants_from_DataFrame
+        :rtype: List of Annotation results from Server
+        """
+        server = "http://192.168.178.95:5000"
+
+        progress_count = 0
+        errorDict = {}
+
+        for variant in self.variants:
+            try:
+                if variant == "Cant perform on this (ref-) notation" or variant == "REST API does not know INV":
+                    #print("Can't perform annotation. Wrong datatype")
+                    print(variant)
+                    pass
+                else:
+                    ext = variant
+                    try:
+                        r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+                    except requests.exceptions.ConnectionError:
+                        requests.status_code = "Connection refused"
+
+                    decoded = r.json() # list
+                    print(repr(decoded))
+                    if 'error' not in decoded[1]:
+                        self.dataForTable.append(decoded[1])
+
+                    if type(decoded[1]) == dict:
+                        if 'error' in decoded[1].keys():
+                            errorDict.update({variant : decoded[1]})
+            except:
                 pass
-            else:
-                ext = variant
-                try:
-                    r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
-                except requests.exceptions.ConnectionError:
-                    requests.status_code = "Connection refused"
+            progress_count += 1
+            self.change_progress_value.emit(progress_count)
 
-                decoded = r.json() # list
-                print(repr(decoded))
-                if 'error' not in decoded[1]:
-                    results.append(decoded[1])
+        self.finished.emit()
+        self.result.emit(self.dataForTable)
 
-                if type(decoded[1]) == dict:
-                    if 'error' in decoded[1].keys():
-                        errorDict.update({variant : decoded[1]})
-        except:
-            pass
-
-
-    return results # results
+    # find out what this emmit can do
+    # it seems to pass infromation to the gui, you could try to use it as a return signal after the process emmits a
+    # finished signal
 
 
 if __name__ == "__main__":
-    fetch_annotation_new()
+    pass
 

@@ -13,26 +13,6 @@ import _thread, threading
 import concurrent.futures
 import time
 
-class Worker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-    result = pyqtSignal(list)
-
-    def __init__(self, variants, parent=None):
-        QObject.__init__(self, parent)
-        self.dataForTable = []
-        self.variants = variants
-        # or some other needed attributes
-
-
-    def run(self):
-        self.dataForTable = fetch_annotation_new(self.variants, QMainWindow)
-        self.finished.emit()
-        self.result.emit(self.dataForTable)
-
-    # find out what this emmit can do
-    # it seems to pass infromation to the gui, you could try to use it as a return signal after the process emmits a
-    # finished signal
 
 
 class UI(QMainWindow):

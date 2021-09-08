@@ -14,22 +14,22 @@ import time
 
 
 '''Think about making a own script for this class'''
-class Worker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-    result = pyqtSignal(list)
-
-    def __init__(self, variants, parent=None):
-        QObject.__init__(self, parent)
-        self.dataForTable = []
-        self.variants = variants
-        # or some other needed attributes
-
-
-    def run(self):
-        self.dataForTable = fetch_annotation_new(self.variants, QMainWindow)
-        self.finished.emit()
-        self.result.emit(self.dataForTable)
+# class Worker(QObject):
+#     finished = pyqtSignal()
+#     progress = pyqtSignal(int)
+#     result = pyqtSignal(list)
+#
+#     def __init__(self, variants, parent=None):
+#         QObject.__init__(self, parent)
+#         self.dataForTable = []
+#         self.variants = variants
+#         # or some other needed attributes
+#
+#
+#     def run(self):
+#         self.dataForTable = fetch_annotation_new(self.variants, QMainWindow)
+#         self.finished.emit()
+#         self.result.emit(self.dataForTable)
 
     # find out what this emmit can do
     # it seems to pass infromation to the gui, you could try to use it as a return signal after the process emmits a
@@ -108,9 +108,10 @@ class UI(QMainWindow):
         Filebrowser loads vcf file in a table and diplays it. Also starts API request and displayes the annotations in
         the annotation table
         """
-        # check if a file is already loaded. If so delete the anno tab
+        # check if a file is already loaded, if so reset annotation functionalities
         if self.tables_loaded:
             self.tab_window_tables.removeTab(1)
+            self.button_annotation.setDisabled(True)
         # open file browser
         filename = QFileDialog.getOpenFileName()
         file_path = filename[0]
@@ -130,7 +131,6 @@ class UI(QMainWindow):
                 # call API and display annotation table
                 self.call_server_as_therad(variants)
                 self.tables_loaded = True
-                self.button_annotation.setEnabled(True)
 
             else:
                 self.show_err_dlg_window('selected file is not in VCF!', 'Error')
@@ -236,20 +236,36 @@ class UI(QMainWindow):
         self.worker = Worker(variants)
         # Step 4: Move worker to the thread
         self.worker.moveToThread(self.thread)
+        # progress bar
+        self.set_progressbar_maximum(len(variants))
+        self.set_progressbar_visibility(False)
         # Step 5: Connect signals and slots
         self.thread.started.connect(self.worker.run)
+        self.worker.change_progress_value.connect(self.set_progressbar_value)
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
-        #self.worker.progress.connect(self.reportProgress)
         # Step 6: Start the thread
         self.thread.start()
 
         # Final resets
+        isHidden = True
+        message = 'Annotations finished!'
+        title = 'Notification'
+        # get data
         self.thread.finished.connect(self.get_annotation_data_from_thread)
+        # hide progress bar
+        self.thread.finished.connect(lambda: self.set_progressbar_visibility(isHidden))
+        # display notification window after thread finished
+        self.thread.finished.connect(lambda: self.show_err_dlg_window(error_message=message, window_title=title))
+        # make annotation button available
+        self.thread.finished.connect(self.unlock_annotation_button)
 
     def get_annotation_data_from_thread(self):
         self.add_annotation_to_table(self.worker.dataForTable)
+
+    def unlock_annotation_button(self):
+        self.button_annotation.setEnabled(True)
 
     def safe_variants_to_file(self):
         """

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>250</width>
+    <width>260</width>
     <height>129</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>227</width>
+     <width>240</width>
      <height>17</height>
     </rect>
    </property>
@@ -32,7 +32,7 @@
   <widget class="QDialogButtonBox" name="button_err_dlg">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>90</x>
      <y>90</y>
      <width>80</width>
      <height>25</height>

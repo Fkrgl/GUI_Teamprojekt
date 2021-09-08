@@ -123,9 +123,9 @@ class UI(QMainWindow):
                 self.call_server_as_therad(variants)
 
             else:
-                self.show_err_dlg_window('selected file is not in VCF!', 'Error')
+                self.show_err_dlg_window('selected file is not in VCF or empty!', 'Error')
         else:
-            self.show_err_dlg_window('selected file is not in VCF!', 'Error')
+            self.show_err_dlg_window('selected file is not in VCF or empty!', 'Error')
 
 
 
@@ -138,16 +138,44 @@ class UI(QMainWindow):
         self.annotation_tab.setLayout(self.annotation_tab.layout)
         self.tab_window_tables.addTab(self.annotation_tab, "Annotations")
 
+
     def display_selected_snv_annotations(self):
         """
         save selected row indices of the (annotation) table, search for each selected snv (row) all annotations and dis-
         playes annotations in a new table in a pop up window
         """
-        indexes = self.vcf_table.selectionModel().selectedRows()
-        for index in sorted(indexes):
-            print('Row %d is selected' % index.row())
-        # get annotations from annotation table
-        # display annotations in dialog table view window
+        cells_data = []
+        tester = []
+
+        try:
+            indexes = self.vcf_table.selectionModel().selectedRows()
+            for index in sorted(indexes):
+                print('Row %d is selected' % index.row())
+                #print(index.data())
+                cells_data.append([index.sibling(index.row(), c).data() for c in range(10)]) # creates a list of all items of selected row
+
+            chr = re.findall(r'\d+', str(cells_data[0][0]))[0]
+            pos = cells_data[0][1]
+            self.find_annotations(chr, pos)
+
+            # get annotations from annotation table
+            # display annotations in dialog table view window
+        except AttributeError:
+            self.show_err_dlg_window('No Row selected', 'Error')
+
+        except IndexError:
+            self.show_err_dlg_window('Wait until Annotation is complete', 'Error')
+
+
+    def find_annotations(self, chr, pos):
+        selectedRowAnnotationList = []
+        annotationData = self.annotation_table_model._data
+        pos = int(pos)
+        print(annotationData.loc[(annotationData['seq_region_name'] == chr) & (annotationData['start'] == pos)])
+
+
+
+
 
     def create_annotation_table(self, data):
         self.annotation_table = QTableView()
@@ -158,6 +186,21 @@ class UI(QMainWindow):
         self.annotation_table_model = TableModel(data)
         self.annotation_table.setModel(self.annotation_table_model)
 
+
+    def check_if_from_cache(self, annotation):
+        """
+        checks whether single annotation is from cache or from VEP Server
+        :param: single annotation (either list of dic or list of list of dic)
+        :rtype: inner dictionary containing all annotation data
+        """
+        if type(annotation) == dict:
+            annotationResult = annotation.get('data')
+        else:
+            annotationResult = annotation[0]
+
+        return annotationResult
+
+
     def add_annotation_to_table(self, annotations):
         """
         extracts important features from annotations of API and adds them as a new annotation to the annotation table
@@ -165,31 +208,72 @@ class UI(QMainWindow):
         """
         entries = []
         print("add_annotation_to_table")
-        # parse the annotations for the table
-        for anno in annotations:
-            '''entry = {'start' : anno['start'],
-                     'input' : anno['input'],
-                     'allele_string' : anno['allele_string'],
-                     'seq_region_name':anno['seq_region_name']}'''
-            for conseqeunces in anno['transcript_consequences']:
-                entry = {'seq_region_name': anno['seq_region_name'],
-                         'start': anno['start'],
-                         'strand' : anno['strand'],
-                         'input': anno['input'],
-                         'allele_string': anno['allele_string'],
-                         'transcript_id' : conseqeunces['transcript_id'],
-                         'biotype' : conseqeunces['biotype'],
-                         'impact' : conseqeunces['impact'],
-                         'consequnce_terms' : ''.join(conseqeunces['consequence_terms'])}
-                entries.append(entry)
 
-                print(conseqeunces)
-        data = pd.DataFrame(data=entries, columns=['seq_region_name','start', 'input', 'allele_string', 'transcript_id', 'biotype', 'impact', 'consequnce_terms'])
-        # print(data)
-        #create table model with given data
-        self.create_annotation_table(data)
-        self.create_annotation_tab()
+        try:
+            # parse the annotations for the table
+            for annos in annotations:
+                '''if "_id" in annos.keys():
+                    print("true")
+                    annotationResult = annotations[0].get('data')
+                    print(type(annotationResult), ' from cache')
 
+                else:
+                    annotationResult = annotations[0]
+                    print("from VEP")
+
+                if type(annos) == dict:
+                    annotationResult = annos.get('data')
+                else:
+                    annotationResult = annos[0]'''
+
+                annotationResult = self.check_if_from_cache(annos)
+
+                entry = {'seq_region_name': annotationResult['seq_region_name'],
+                        'start': annotationResult['start'],
+                        'strand': annotationResult['strand'],
+                        'input': annotationResult['input'],
+                        'allele_string': annotationResult['allele_string'],
+                        'transcript_id' : '.',
+                        'biotype' : '.',
+                        'impact' : '.',
+                        'consequnce_terms' : '.'}
+
+
+                if 'transcript_consequences' in annotationResult:
+                    for consequences in annotationResult.get('transcript_consequences'):
+                        print(consequences)
+                        entry = {'seq_region_name': annotationResult['seq_region_name'],
+                                 'start': annotationResult['start'],
+                                 'strand': annotationResult['strand'],
+                                 'input': annotationResult['input'],
+                                 'allele_string': annotationResult['allele_string'],
+                                 'transcript_id' : consequences['transcript_id'],
+                                 'biotype' : consequences['biotype'],
+                                 'impact' : consequences['impact'],
+                                 'consequnce_terms' : ''.join(consequences['consequence_terms'])}
+
+                        entries.append(entry)
+
+                else: entries.append(entry)
+
+
+                #print(consequences)
+            data = pd.DataFrame(data=entries, columns=['seq_region_name','start', 'input', 'allele_string', 'transcript_id', 'biotype', 'impact', 'consequnce_terms'])
+
+            #create table model with given data
+
+            self.create_annotation_table(data)
+            self.create_annotation_tab()
+
+
+        except IndexError:
+            self.show_err_dlg_window('Server is down', 'Error')
+
+        except AttributeError:
+            self.show_err_dlg_window('NoneType object has not attribute get', 'Error')
+
+    def save_annotation_frame(self,data):
+        return data
 
     def call_server_as_therad(self, variants):
         """

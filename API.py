@@ -12,6 +12,11 @@ def get_variants_from_DataFrame(DataFrame):
 
 
 def region_caller(snv):
+    """
+    Creates server request for each Variant in vcf file
+    :param: Pandas df representing vcf
+    :rtype: String representing server request
+    """
     possibleCharacters = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']
 
     if snv['chrom'] != '':
@@ -27,24 +32,24 @@ def region_caller(snv):
     if len(snv['alt']) == 1:
         if snv['alt'] in possibleCharacters:
             alt = snv['alt']
-            variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
+            variantCall = "/annotate/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
 
     elif len(snv['alt']) > 1:
 
         matched_list = [characters in possibleCharacters for characters in snv[4]]
         if all(matched_list) == True:
             alt = snv['alt']
-            variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
+            variantCall = "/annotate/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
 
     elif 'DUP' in snv['alt']:
-        ref = 'DUP'
-        variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
+        alt = 'DUP'
+        variantCall = "/annotate/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
     elif 'DEL' in snv['alt']:
-        ref = 'DEL'
-        variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
+        alt = 'DEL'
+        variantCall = "/annotate/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
     elif 'INV' in snv['alt']:
-        ref = 'INV'
-        variantCall = "/vep/human/region/{}:{}-{}/{}?".format(chromosome,pos,pos,ref)
+        alt = 'INV'
+        variantCall = "/annotate/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
         #variantCall = "REST API does not know INV"
     else:
         variantCall = "Cant perform on this (ref-) notation"
@@ -56,34 +61,41 @@ def region_caller(snv):
 ''' performs actual task. Calls each item of the list of inquiries created in get_variants() in the REST API and prints out the resulting annotations as a list of dictionaries (?) '''
 
 def fetch_annotation_new(variants, QMainWindow):
+    """
+    sends Annotation requests to localhost REST API server
+    :param: String -> variant request string (created in get_variants_from_DataFrame
+    :rtype: List of Annotation results from Server
+    """
+    server = "http://192.168.178.95:5000"
 
-    server = "https://grch37.rest.ensembl.org"
-    #server = "https://rest.ensembl.org"
     results = []
     progress_count = 0
+    errorDict = {}
+
     for variant in variants:
-        currentID = variant
-        print(variant)
         try:
             if variant == "Cant perform on this (ref-) notation" or variant == "REST API does not know INV":
                 #print("Can't perform annotation. Wrong datatype")
-                print(currentID)
+                print(variant)
                 pass
             else:
-                ext = currentID
-                r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
-
-                if not r.ok:
-                    r.raise_for_status()
-                    sys.exit()
+                ext = variant
+                try:
+                    r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+                except requests.exceptions.ConnectionError:
+                    requests.status_code = "Connection refused"
 
                 decoded = r.json() # list
-                decoded.insert(0, currentID) # inserts id at front of list (use to access specific file id in db respectively to  check whether id is already present in db or if api has to be called)
-                #print(repr(decoded[1])) # prints list as string
-                print(decoded[1])
-                results.append(decoded[1])
+                print(repr(decoded))
+                if 'error' not in decoded[1]:
+                    results.append(decoded[1])
+
+                if type(decoded[1]) == dict:
+                    if 'error' in decoded[1].keys():
+                        errorDict.update({variant : decoded[1]})
         except:
             pass
+
 
     return results # results
 

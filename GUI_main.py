@@ -87,6 +87,11 @@ class UI(QMainWindow):
         Filebrowser loads vcf file in a table and diplays it. Also starts API request and displayes the annotations in
         the annotation table
         """
+        # check if a file is already loaded, if so reset annotation functionalities
+        if self.tables_loaded:
+            self.tab_window_tables.removeTab(1)
+            self.button_annotation.setDisabled(True)
+        # open file browser
         filename = QFileDialog.getOpenFileName()
         file_path = filename[0]
         if 'vcf' in file_path:
@@ -104,6 +109,7 @@ class UI(QMainWindow):
 
                 # call API and display annotation table
                 self.call_server_as_therad(variants)
+                self.tables_loaded = True
 
             else:
                 self.show_err_dlg_window('selected file is not in VCF or empty!', 'Error')
@@ -127,19 +133,22 @@ class UI(QMainWindow):
         save selected row indices of the (annotation) table, search for each selected snv (row) all annotations and dis-
         playes annotations in a new table in a pop up window
         """
-        cells_data = []
-        tester = []
 
         try:
             indexes = self.vcf_table.selectionModel().selectedRows()
+            selected_annotations = pd.DataFrame(columns=self.annotation_table_model._data.columns)
             for index in sorted(indexes):
-                print('Row %d is selected' % index.row())
-                #print(index.data())
-                cells_data.append([index.sibling(index.row(), c).data() for c in range(10)]) # creates a list of all items of selected row
+                snv = self.vcf_model.get_row(index.row())
+                selected_data = self.get_annotations_of_selected_snv(snv)
+                selected_annotations = selected_annotations.append(selected_data, ignore_index=True)
 
-            chr = re.findall(r'\d+', str(cells_data[0][0]))[0]
-            pos = cells_data[0][1]
-            self.find_annotations(chr, pos)
+
+            print(selected_annotations)
+            self.selected_anno_table_model = TableModel(selected_annotations)
+            self.selected_anno_dialog.selected_anno_table.setModel(self.selected_anno_table_model)
+            self.selected_anno_dialog.selected_anno_table.setAlternatingRowColors(True)
+            self.selected_anno_dialog.selected_anno_table.setStyleSheet("alternate-background-color: PowderBlue")
+            self.selected_anno_dialog.show()
 
             # get annotations from annotation table
             # display annotations in dialog table view window
@@ -150,12 +159,14 @@ class UI(QMainWindow):
             self.show_err_dlg_window('Wait until Annotation is complete', 'Error')
 
 
-    def find_annotations(self, chr, pos):
-        selectedRowAnnotationList = []
-        annotationData = self.annotation_table_model._data
-        pos = int(pos)
-        print(annotationData.loc[(annotationData['seq_region_name'] == chr) & (annotationData['start'] == pos)])
 
+    def get_annotations_of_selected_snv(self, snv):
+        anno_data = self.annotation_table_model._data
+        selected_data = anno_data.loc[(anno_data['pos'] == snv['pos'])
+                                      & (anno_data['chrom'] == snv['chrom'])
+                                      & (anno_data['ref'] == snv['ref'])
+                                      & (anno_data['alt'] == snv['alt'])]
+        return selected_data
 
 
 
@@ -195,26 +206,21 @@ class UI(QMainWindow):
         try:
             # parse the annotations for the table
             for annos in annotations:
-                '''if "_id" in annos.keys():
-                    print("true")
-                    annotationResult = annotations[0].get('data')
-                    print(type(annotationResult), ' from cache')
 
-                else:
-                    annotationResult = annotations[0]
-                    print("from VEP")
-
-                if type(annos) == dict:
-                    annotationResult = annos.get('data')
-                else:
-                    annotationResult = annos[0]'''
 
                 annotationResult = self.check_if_from_cache(annos)
 
-                entry = {'seq_region_name': annotationResult['seq_region_name'],
-                        'start': annotationResult['start'],
+                bases = annotationResult['allele_string'].split('/')
+                ref = bases[0]
+                alt = bases[1]
+
+
+                entry = {'chr': 'chr' + str(annotationResult['seq_region_name']),
+                        'pos': annotationResult['start'],
                         'strand': annotationResult['strand'],
                         'input': annotationResult['input'],
+                        'ref': ref,
+                        'alt' : alt,
                         'allele_string': annotationResult['allele_string'],
                         'transcript_id' : '.',
                         'biotype' : '.',
@@ -225,10 +231,12 @@ class UI(QMainWindow):
                 if 'transcript_consequences' in annotationResult:
                     for consequences in annotationResult.get('transcript_consequences'):
                         print(consequences)
-                        entry = {'seq_region_name': annotationResult['seq_region_name'],
-                                 'start': annotationResult['start'],
+                        entry = {'chr': 'chr' + str(annotationResult['seq_region_name']),
+                                 'pos': annotationResult['start'],
                                  'strand': annotationResult['strand'],
                                  'input': annotationResult['input'],
+                                 'ref': ref,
+                                 'alt' : alt,
                                  'allele_string': annotationResult['allele_string'],
                                  'transcript_id' : consequences['transcript_id'],
                                  'biotype' : consequences['biotype'],
@@ -239,12 +247,9 @@ class UI(QMainWindow):
 
                 else: entries.append(entry)
 
-
-                #print(consequences)
-            data = pd.DataFrame(data=entries, columns=['seq_region_name','start', 'input', 'allele_string', 'transcript_id', 'biotype', 'impact', 'consequnce_terms'])
-
+            data = pd.DataFrame(data=entries, columns=['chr', 'pos', 'input', 'ref', 'alt', 'transcript_id', 'biotype', 'impact', 'consequnce_terms'])
+            data = data.rename(columns={'chr' : 'chrom'})
             #create table model with given data
-
             self.create_annotation_table(data)
             self.create_annotation_tab()
 
@@ -255,8 +260,7 @@ class UI(QMainWindow):
         except AttributeError:
             self.show_err_dlg_window('NoneType object has not attribute get', 'Error')
 
-    def save_annotation_frame(self,data):
-        return data
+
 
     def call_server_as_therad(self, variants):
         """

@@ -152,12 +152,9 @@ class UI(QMainWindow):
 
             # get annotations from annotation table
             # display annotations in dialog table view window
+
         except AttributeError:
             self.show_err_dlg_window('No Row selected', 'Error')
-
-        except IndexError:
-            self.show_err_dlg_window('Wait until Annotation is complete', 'Error')
-
 
 
     def get_annotations_of_selected_snv(self, snv):
@@ -167,8 +164,6 @@ class UI(QMainWindow):
                                       & (anno_data['ref'] == snv['ref'])
                                       & (anno_data['alt'] == snv['alt'])]
         return selected_data
-
-
 
 
     def create_annotation_table(self, data):

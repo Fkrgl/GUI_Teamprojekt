@@ -5,7 +5,7 @@ import time
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-
+server = "http://localhost:5000"
 
 def get_variants_from_DataFrame(DataFrame):
     variants = [region_caller(DataFrame.iloc[i,:]) for i in range(len(DataFrame))]
@@ -19,7 +19,12 @@ def region_caller(snv):
     :param: Pandas df representing vcf
     :rtype: String representing server request
     """
+
     possibleCharacters = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']
+    chromosome = ""
+    pos = ""
+    alt = ""
+
 
     if snv['chrom'] != '':
         chromosome = re.findall(r'\d+', str(snv['chrom'])) # extracts only the integer from the chromosome-notation (e.g. if 'chr1' --> 1)
@@ -28,9 +33,37 @@ def region_caller(snv):
     if snv['pos'] != '':
         pos = snv['pos']
 
-    if snv['id'] != '' and snv['id'] != '.':
-        specID = snv['id']
-        
+    if len(snv['ref']) > 1: # DELETION
+        pos = pos +1
+        alt = '-'
+
+    else:
+        if len(snv['alt']) == 1:
+            if snv['alt'] in possibleCharacters:
+                alt = snv['alt']
+
+
+        elif len(snv['alt']) > 1:
+
+            matched_list = [characters in possibleCharacters for characters in snv[4]]
+            if all(matched_list) == True:
+                alt = snv['alt']
+
+
+    variantCall = "/annotate/{}:{}-{}/{}?".format(chromosome,pos,pos,alt)
+
+
+    return variantCall
+
+    '''possibleCharacters = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']
+
+    if snv['chrom'] != '':
+        chromosome = re.findall(r'\d+', str(snv['chrom'])) # extracts only the integer from the chromosome-notation (e.g. if 'chr1' --> 1)
+        chromosome = chromosome[0]
+
+    if snv['pos'] != '':
+        pos = snv['pos']
+
     if len(snv['alt']) == 1:
         if snv['alt'] in possibleCharacters:
             alt = snv['alt']
@@ -56,7 +89,7 @@ def region_caller(snv):
     else:
         variantCall = "Cant perform on this (ref-) notation"
 
-    return variantCall
+    return variantCall'''
 
 
 
@@ -82,10 +115,11 @@ class Worker(QObject):
         :param: String -> variant request string (created in get_variants_from_DataFrame
         :rtype: List of Annotation results from Server
         """
-        server = "http://192.168.178.95:5000"
+        #server = "http://localhost:5000/"
 
         progress_count = 0
         errorDict = {}
+        print("run called")
 
         for variant in self.variants:
             try:
@@ -115,6 +149,7 @@ class Worker(QObject):
 
         self.finished.emit()
         self.result.emit(self.dataForTable)
+        print(self.dataForTable)
 
     # find out what this emmit can do
     # it seems to pass infromation to the gui, you could try to use it as a return signal after the process emmits a
